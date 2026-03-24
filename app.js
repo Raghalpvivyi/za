@@ -5,10 +5,10 @@
  */
 
 // ══════════════════════════════════════════════════════════
-//  FIREBASE CONFIG — Replace with your own config
+//  FIREBASE IMPORTS & CONFIG
 // ══════════════════════════════════════════════════════════
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const FIREBASE_CONFIG = {
@@ -54,7 +54,6 @@ const store = {
 //  INIT
 // ══════════════════════════════════════════════════════════
 async function init() {
-  // Load saved data
   state.tasks = store.get('tasks', []);
   state.projects = store.get('projects', [
     { id: 'p1', name: 'شخصي', color: '#6C63FF' },
@@ -66,11 +65,9 @@ async function init() {
   applyTheme();
   applyLang();
 
-  // Splash
   await delay(2400);
   hideSplash();
 
-  // Check auth
   const savedUser = store.get('user', null);
   if (savedUser) {
     state.user = savedUser;
@@ -79,10 +76,8 @@ async function init() {
     showAuth();
   }
 
-  // Start reminder check
   startReminderCheck();
 
-  // Request notifications
   if ('Notification' in window && Notification.permission === 'granted') {
     document.getElementById('notif-toggle').checked = true;
   }
@@ -150,49 +145,67 @@ function togglePass(id) {
   i.type = i.type === 'password' ? 'text' : 'password';
 }
 
-function loginEmail() {
+async function loginEmail() {
   const email = document.getElementById('login-email').value.trim();
   const pass = document.getElementById('login-pass').value;
   if (!email || !pass) { showToast('يرجى ملء جميع الحقول', 'error'); return; }
-  if (pass.length < 6) { showToast('كلمة المرور قصيرة جداً', 'error'); return; }
-  const u = { uid: 'u_' + Date.now(), email, name: email.split('@')[0], avatar: '' };
-  completeLogin(u);
+  try {
+    const result = await signInWithEmailAndPassword(auth, email, pass);
+    const user = result.user;
+    await saveUserToFirestore(user.uid, { email: user.email, name: user.displayName || email.split('@')[0] });
+    completeLogin({ uid: user.uid, email: user.email, name: user.displayName || email.split('@')[0], avatar: user.photoURL || '' });
+  } catch (e) {
+    showToast('خطأ: ' + translateFirebaseError(e.code), 'error');
+  }
 }
 
-function registerEmail() {
+async function registerEmail() {
   const name = document.getElementById('reg-name').value.trim();
   const email = document.getElementById('reg-email').value.trim();
   const pass = document.getElementById('reg-pass').value;
   if (!name || !email || !pass) { showToast('يرجى ملء جميع الحقول', 'error'); return; }
-  if (pass.length < 6) { showToast('كلمة المرور قصيرة جداً (6 أحرف على الأقل)', 'error'); return; }
-  const u = { uid: 'u_' + Date.now(), email, name, avatar: '' };
-  completeLogin(u);
+  if (pass.length < 6) { showToast('كلمة المرور 6 أحرف على الأقل', 'error'); return; }
+  try {
+    const result = await createUserWithEmailAndPassword(auth, email, pass);
+    const user = result.user;
+    await saveUserToFirestore(user.uid, { email, name });
+    completeLogin({ uid: user.uid, email, name, avatar: '' });
+  } catch (e) {
+    showToast('خطأ: ' + translateFirebaseError(e.code), 'error');
+  }
 }
 
-function loginGoogle() {
-  // In production: use Firebase Google Auth
-  const u = { uid: 'google_' + Date.now(), email: 'user@gmail.com', name: 'مستخدم Google', avatar: '' };
-  completeLogin(u, 'Google');
+async function loginGoogle() {
+  try {
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+    await saveUserToFirestore(user.uid, { email: user.email, name: user.displayName, avatar: user.photoURL });
+    completeLogin({ uid: user.uid, email: user.email, name: user.displayName, avatar: user.photoURL || '' });
+  } catch (e) {
+    showToast('خطأ في تسجيل الدخول بـ Google', 'error');
+  }
 }
 
 function loginFacebook() {
   const u = { uid: 'fb_' + Date.now(), email: 'user@facebook.com', name: 'مستخدم Facebook', avatar: '' };
-  completeLogin(u, 'Facebook');
+  completeLogin(u);
 }
 
 function loginDemo() {
   const u = { uid: 'demo_' + Date.now(), email: 'demo@taskflow.pro', name: 'المستخدم التجريبي', avatar: '' };
-  completeLogin(u, 'Demo');
+  completeLogin(u);
 }
 
-function completeLogin(user, provider = '') {
+function completeLogin(user) {
   state.user = user;
   store.set('user', user);
   showToast(`✅ مرحباً ${user.name}!`, 'success');
   showApp();
 }
 
-function logout() {
+async function logout() {
+  try { await signOut(auth); } catch (e) {}
   state.user = null;
   store.set('user', null);
   document.getElementById('app').classList.add('hidden');
@@ -208,27 +221,22 @@ function updateUserUI() {
   const { name, email, avatar } = state.user;
   const initial = (name || 'U').charAt(0).toUpperCase();
 
-  // Header avatar
   document.getElementById('user-initial').textContent = initial;
   if (avatar) document.getElementById('user-avatar').src = avatar;
 
-  // Sidebar
   document.getElementById('sidebar-name').textContent = name || 'المستخدم';
   document.getElementById('sidebar-email').textContent = email || '';
   document.getElementById('sidebar-avatar-initial').textContent = initial;
   if (avatar) document.getElementById('sidebar-avatar-img').src = avatar;
 
-  // Settings
   document.getElementById('set-name').textContent = name || 'الاسم';
   document.getElementById('set-email').textContent = email || 'البريد';
 
-  // Greeting
   const hour = new Date().getHours();
   let greet = hour < 12 ? 'صباح الخير ☀️' : hour < 17 ? 'مساء الخير 🌤' : 'مساء النور 🌙';
   document.getElementById('greeting-time').textContent = greet;
   document.getElementById('greeting-name').textContent = `مرحباً، ${(name || 'صديقي').split(' ')[0]}!`;
 
-  // Daily quotes
   const quotes = [
     'كل يوم هو فرصة جديدة للتفوق.',
     'الانضباط يصنع الفرق.',
@@ -247,7 +255,6 @@ function navigate(page) {
   state.currentPage = page;
   closeSidebar();
 
-  // Update pages
   document.querySelectorAll('.page').forEach(p => {
     p.classList.toggle('active', false);
     p.classList.add('hidden');
@@ -255,20 +262,16 @@ function navigate(page) {
   const target = document.getElementById('page-' + page);
   if (target) { target.classList.remove('hidden'); target.classList.add('active'); }
 
-  // Update bottom nav
   document.querySelectorAll('.bnav-item[data-page]').forEach(b => b.classList.toggle('active', b.dataset.page === page));
 
-  // Update sidebar nav
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   const navMap = { home: 0, today: 1, upcoming: 2, completed: 3, dashboard: 4 };
   const allNavItems = document.querySelectorAll('.sidebar-nav .nav-item');
   if (navMap[page] !== undefined && allNavItems[navMap[page]]) allNavItems[navMap[page]].classList.add('active');
 
-  // Update header title
   const titles = { home: 'مهامي', today: 'مهام اليوم', upcoming: 'المهام القادمة', completed: 'المكتملة', dashboard: 'الإنتاجية', settings: 'الإعدادات', about: 'عن المطور' };
   document.getElementById('page-title').textContent = titles[page] || page;
 
-  // Render page
   if (page === 'home') renderHome();
   else if (page === 'today') renderTodayPage();
   else if (page === 'upcoming') renderUpcomingPage();
@@ -327,8 +330,7 @@ function setFilter(filter, btn) {
 }
 
 function getFilteredTasks() {
-  const now = new Date();
-  const todayStr = formatDate(now);
+  const todayStr = formatDate(new Date());
   switch (state.currentFilter) {
     case 'today': return state.tasks.filter(t => t.date === todayStr && !t.completed);
     case 'high': return state.tasks.filter(t => t.priority === 'high' && !t.completed);
@@ -398,7 +400,6 @@ function renderTasksList(tasks, containerId) {
   const empty = document.getElementById('empty-state');
   if (empty) empty.classList.add('hidden');
 
-  // Sort: incomplete first, then by priority, then by date
   const priorityOrder = { high: 0, medium: 1, low: 2 };
   const sorted = [...tasks].sort((a, b) => {
     if (a.completed !== b.completed) return a.completed ? 1 : -1;
@@ -411,7 +412,7 @@ function renderTasksList(tasks, containerId) {
 }
 
 function renderTaskCard(task) {
-  const now = new Date(); const today = formatDate(now);
+  const today = formatDate(new Date());
   let dateClass = '', dateLabel = '';
   if (task.date) {
     if (task.date < today) { dateClass = 'overdue'; dateLabel = '⚠ متأخرة'; }
@@ -438,8 +439,8 @@ function renderTaskCard(task) {
         </div>
       </div>
       <div class="task-actions">
-        <button class="task-action-btn edit" onclick="openEditTask('${task.id}')" title="تعديل">✏</button>
-        <button class="task-action-btn delete" onclick="deleteTask('${task.id}')" title="حذف">🗑</button>
+        <button class="task-action-btn edit" onclick="openEditTask('${task.id}')">✏</button>
+        <button class="task-action-btn delete" onclick="deleteTask('${task.id}')">🗑</button>
       </div>
     </div>
   `;
@@ -476,29 +477,22 @@ function renderDashboard() {
   document.getElementById('d-completed').textContent = completed;
   document.getElementById('d-pending').textContent = pending;
   document.getElementById('d-rate').textContent = rate + '%';
-  document.getElementById('d-streak').textContent = calculateStreak();
+  document.getElementById('d-streak').textContent = Math.min(completed, 30);
 
   renderWeeklyChart();
   renderPriorityDist();
-}
-
-function calculateStreak() {
-  // Simple streak calculation
-  return Math.min(state.tasks.filter(t => t.completed).length, 30);
 }
 
 function renderWeeklyChart() {
   const days = ['أح', 'إث', 'ثل', 'أر', 'خم', 'جم', 'سب'];
   const now = new Date();
   const chartData = [];
-
   for (let i = 6; i >= 0; i--) {
     const d = new Date(now); d.setDate(d.getDate() - i);
     const ds = formatDate(d);
     const count = state.tasks.filter(t => t.completedAt && t.completedAt.startsWith(ds)).length;
     chartData.push({ day: days[d.getDay()], count });
   }
-
   const max = Math.max(...chartData.map(d => d.count), 1);
   document.getElementById('weekly-chart').innerHTML = chartData.map(d => `
     <div class="bar-item">
@@ -513,7 +507,6 @@ function renderPriorityDist() {
   const med = state.tasks.filter(t => t.priority === 'medium').length;
   const low = state.tasks.filter(t => t.priority === 'low').length;
   const total = Math.max(state.tasks.length, 1);
-
   document.getElementById('priority-dist').innerHTML = `
     <div class="dist-row">
       <span class="dist-label" style="color:var(--high)">عاجل</span>
@@ -768,26 +761,17 @@ function scheduleReminder(task) {
   const dateTime = new Date(`${task.date}T${task.time || '09:00'}`);
   const reminderMs = parseInt(task.reminder) * 60 * 1000;
   const reminderTime = dateTime - reminderMs;
-  const now = Date.now();
-  if (reminderTime > now) {
-    setTimeout(() => sendReminder(task), reminderTime - now);
+  if (reminderTime > Date.now()) {
+    setTimeout(() => sendReminder(task), reminderTime - Date.now());
   }
 }
 
 function sendReminder(task) {
-  // In-app notification
   document.getElementById('notif-body').textContent = `تذكير: ${task.title}`;
   document.getElementById('notif-popup').classList.remove('hidden');
-
-  // Browser notification
   if (Notification.permission === 'granted') {
-    new Notification('TaskFlow Pro - تذكير', {
-      body: task.title,
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
-    });
+    new Notification('TaskFlow Pro - تذكير', { body: task.title });
   }
-
   showToast(`🔔 تذكير: ${task.title}`, 'info');
 }
 
@@ -801,9 +785,7 @@ function startReminderCheck() {
     state.tasks.filter(t => !t.completed && t.date && t.time).forEach(task => {
       const taskTime = new Date(`${task.date}T${task.time}`);
       const diff = taskTime - now;
-      if (diff > 0 && diff <= 60000) { // within 1 minute
-        sendReminder(task);
-      }
+      if (diff > 0 && diff <= 60000) sendReminder(task);
     });
   }, 60000);
 }
@@ -824,7 +806,6 @@ function closeModal(id) {
   setTimeout(() => { m.style.display = 'none'; document.body.style.overflow = ''; }, 300);
 }
 
-// Close modal on overlay click
 document.addEventListener('click', (e) => {
   if (e.target.classList.contains('modal-overlay')) {
     e.target.classList.remove('open');
@@ -855,6 +836,29 @@ function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 function formatDate(d) { return d.toISOString().split('T')[0]; }
 function escHtml(str) {
   return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ══════════════════════════════════════════════════════════
+//  FIREBASE HELPERS
+// ══════════════════════════════════════════════════════════
+async function saveUserToFirestore(uid, data) {
+  try {
+    await setDoc(doc(db, 'users', uid), { ...data, updatedAt: new Date().toISOString() }, { merge: true });
+  } catch (e) { console.log('Firestore error:', e); }
+}
+
+function translateFirebaseError(code) {
+  const errors = {
+    'auth/user-not-found': 'البريد غير مسجّل',
+    'auth/wrong-password': 'كلمة المرور خاطئة',
+    'auth/email-already-in-use': 'البريد مسجّل مسبقاً',
+    'auth/invalid-email': 'البريد غير صحيح',
+    'auth/weak-password': 'كلمة المرور ضعيفة',
+    'auth/popup-closed-by-user': 'تم إغلاق نافذة تسجيل الدخول',
+    'auth/network-request-failed': 'تحقق من الاتصال بالإنترنت',
+    'auth/invalid-credential': 'البريد أو كلمة المرور خاطئة',
+  };
+  return errors[code] || 'حدث خطأ، حاول مجدداً';
 }
 
 // ══════════════════════════════════════════════════════════
