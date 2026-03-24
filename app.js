@@ -7,14 +7,22 @@
 // ══════════════════════════════════════════════════════════
 //  FIREBASE CONFIG — Replace with your own config
 // ══════════════════════════════════════════════════════════
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
 const FIREBASE_CONFIG = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDPLik6gKOjaoPWPvZosewetivsHujUzA8",
+  authDomain: "taskflow-pro-f508d.firebaseapp.com",
+  projectId: "taskflow-pro-f508d",
+  storageBucket: "taskflow-pro-f508d.firebasestorage.app",
+  messagingSenderId: "165113319243",
+  appId: "1:165113319243:web:40896204caa4e05ee0a2ce"
 };
+
+const firebaseApp = initializeApp(FIREBASE_CONFIG);
+const auth = getAuth(firebaseApp);
+const db = getFirestore(firebaseApp);
 
 // ══════════════════════════════════════════════════════════
 //  APP STATE
