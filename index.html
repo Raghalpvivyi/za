@@ -63,13 +63,11 @@
       <p class="auth-desc">سجّل دخولك وابدأ رحلتك نحو الإنتاجية</p>
     </div>
 
-    <!-- Tabs -->
     <div class="auth-tabs">
       <button class="auth-tab active" onclick="switchAuthTab('login')">تسجيل الدخول</button>
       <button class="auth-tab" onclick="switchAuthTab('register')">حساب جديد</button>
     </div>
 
-    <!-- Login Form -->
     <div id="login-form" class="auth-form">
       <div class="input-group">
         <span class="input-icon">✉</span>
@@ -80,12 +78,9 @@
         <input type="password" id="login-pass" placeholder="كلمة المرور" class="auth-input" />
         <button class="toggle-pass" onclick="togglePass('login-pass')">👁</button>
       </div>
-      <button class="btn-primary btn-full" onclick="loginEmail()">
-        <span>دخول</span>
-      </button>
+      <button class="btn-primary btn-full" onclick="loginEmail()"><span>دخول</span></button>
     </div>
 
-    <!-- Register Form -->
     <div id="register-form" class="auth-form hidden">
       <div class="input-group">
         <span class="input-icon">👤</span>
@@ -99,15 +94,11 @@
         <span class="input-icon">🔒</span>
         <input type="password" id="reg-pass" placeholder="كلمة المرور" class="auth-input" />
       </div>
-      <button class="btn-primary btn-full" onclick="registerEmail()">
-        <span>إنشاء حساب</span>
-      </button>
+      <button class="btn-primary btn-full" onclick="registerEmail()"><span>إنشاء حساب</span></button>
     </div>
 
-    <!-- Divider -->
     <div class="auth-divider"><span>أو تابع بـ</span></div>
 
-    <!-- Social Buttons -->
     <div class="social-btns">
       <button class="social-btn google" onclick="loginGoogle()">
         <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
@@ -119,10 +110,7 @@
       </button>
     </div>
 
-    <!-- Demo Login -->
-    <button class="btn-ghost btn-full" onclick="loginDemo()">
-      <span>تجربة بدون تسجيل (Demo)</span>
-    </button>
+    <button class="btn-ghost btn-full" onclick="loginDemo()"><span>🚀 تجربة بدون تسجيل (Demo)</span></button>
   </div>
 </div>
 
@@ -131,10 +119,8 @@
 <!-- ══════════════════════════════════════════ -->
 <div id="app" class="screen hidden">
 
-  <!-- Status Bar Spacer -->
   <div class="status-bar"></div>
 
-  <!-- Top Header -->
   <header class="app-header" id="app-header">
     <div class="header-left">
       <button class="icon-btn" onclick="toggleSidebar()">
@@ -155,7 +141,6 @@
     </div>
   </header>
 
-  <!-- Search Bar (hidden by default) -->
   <div class="search-bar" id="search-bar">
     <div class="search-inner">
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -164,10 +149,8 @@
     </div>
   </div>
 
-  <!-- Sidebar Overlay -->
   <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-  <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="sidebar-user">
@@ -226,12 +209,9 @@
     </nav>
   </aside>
 
-  <!-- Main Content -->
   <main class="main-content" id="main-content">
 
-    <!-- ── HOME PAGE ── -->
     <section id="page-home" class="page active">
-      <!-- Greeting Banner -->
       <div class="greeting-banner">
         <div class="greeting-text">
           <p class="greeting-sub" id="greeting-time">صباح الخير ☀️</p>
@@ -239,18 +219,10 @@
           <p class="greeting-quote" id="daily-quote">كل يوم هو فرصة جديدة للتفوق.</p>
         </div>
         <div class="greeting-stats">
-          <div class="stat-pill">
-            <span id="stats-done">0</span>
-            <span>مكتملة</span>
-          </div>
-          <div class="stat-pill pending">
-            <span id="stats-pending">0</span>
-            <span>معلقة</span>
-          </div>
+          <div class="stat-pill"><span id="stats-done">0</span><span>مكتملة</span></div>
+          <div class="stat-pill pending"><span id="stats-pending">0</span><span>معلقة</span></div>
         </div>
       </div>
-
-      <!-- Progress Bar -->
       <div class="progress-section">
         <div class="progress-header">
           <span>تقدم اليوم</span>
@@ -260,8 +232,6 @@
           <div class="progress-fill" id="progress-fill" style="width:0%"></div>
         </div>
       </div>
-
-      <!-- Filter Chips -->
       <div class="filter-chips">
         <button class="chip active" onclick="setFilter('all', this)">الكل</button>
         <button class="chip" onclick="setFilter('today', this)">اليوم</button>
@@ -270,15 +240,11 @@
         <button class="chip" onclick="setFilter('low', this)">منخفض</button>
         <button class="chip" onclick="setFilter('completed', this)">مكتمل</button>
       </div>
-
-      <!-- Tasks List -->
       <div class="section-header">
         <h3 class="section-title">المهام</h3>
         <span class="section-count" id="tasks-count">0 مهمة</span>
       </div>
       <div id="tasks-list" class="tasks-list"></div>
-
-      <!-- Empty State -->
       <div id="empty-state" class="empty-state hidden">
         <div class="empty-icon">📋</div>
         <h3>لا توجد مهام</h3>
@@ -287,7 +253,6 @@
       </div>
     </section>
 
-    <!-- ── TODAY PAGE ── -->
     <section id="page-today" class="page hidden">
       <div class="page-inner">
         <div class="today-header">
@@ -303,7 +268,6 @@
       </div>
     </section>
 
-    <!-- ── UPCOMING PAGE ── -->
     <section id="page-upcoming" class="page hidden">
       <div class="page-inner">
         <h2>المهام القادمة</h2>
@@ -316,7 +280,6 @@
       </div>
     </section>
 
-    <!-- ── COMPLETED PAGE ── -->
     <section id="page-completed" class="page hidden">
       <div class="page-inner">
         <h2>المهام المكتملة</h2>
@@ -329,48 +292,19 @@
       </div>
     </section>
 
-    <!-- ── DASHBOARD PAGE ── -->
     <section id="page-dashboard" class="page hidden">
       <div class="page-inner">
         <h2 class="page-h2">لوحة الإنتاجية</h2>
         <div class="dashboard-grid">
-          <div class="dash-card">
-            <div class="dash-card-icon" style="background:rgba(108,99,255,.2)">✅</div>
-            <div class="dash-card-info">
-              <span class="dash-number" id="d-completed">0</span>
-              <span class="dash-label">مكتملة</span>
-            </div>
-          </div>
-          <div class="dash-card">
-            <div class="dash-card-icon" style="background:rgba(255,101,132,.2)">⏳</div>
-            <div class="dash-card-info">
-              <span class="dash-number" id="d-pending">0</span>
-              <span class="dash-label">معلقة</span>
-            </div>
-          </div>
-          <div class="dash-card">
-            <div class="dash-card-icon" style="background:rgba(255,190,11,.2)">🔥</div>
-            <div class="dash-card-info">
-              <span class="dash-number" id="d-streak">0</span>
-              <span class="dash-label">يوم متتالي</span>
-            </div>
-          </div>
-          <div class="dash-card">
-            <div class="dash-card-icon" style="background:rgba(16,185,129,.2)">📊</div>
-            <div class="dash-card-info">
-              <span class="dash-number" id="d-rate">0%</span>
-              <span class="dash-label">معدل الإنجاز</span>
-            </div>
-          </div>
+          <div class="dash-card"><div class="dash-card-icon" style="background:rgba(108,99,255,.2)">✅</div><div class="dash-card-info"><span class="dash-number" id="d-completed">0</span><span class="dash-label">مكتملة</span></div></div>
+          <div class="dash-card"><div class="dash-card-icon" style="background:rgba(255,101,132,.2)">⏳</div><div class="dash-card-info"><span class="dash-number" id="d-pending">0</span><span class="dash-label">معلقة</span></div></div>
+          <div class="dash-card"><div class="dash-card-icon" style="background:rgba(255,190,11,.2)">🔥</div><div class="dash-card-info"><span class="dash-number" id="d-streak">0</span><span class="dash-label">يوم متتالي</span></div></div>
+          <div class="dash-card"><div class="dash-card-icon" style="background:rgba(16,185,129,.2)">📊</div><div class="dash-card-info"><span class="dash-number" id="d-rate">0%</span><span class="dash-label">معدل الإنجاز</span></div></div>
         </div>
-
-        <!-- Weekly Chart -->
         <div class="chart-card">
           <h3 class="chart-title">الأسبوع الحالي</h3>
           <div class="bar-chart" id="weekly-chart"></div>
         </div>
-
-        <!-- Priority Distribution -->
         <div class="chart-card">
           <h3 class="chart-title">توزيع الأولوية</h3>
           <div class="priority-dist" id="priority-dist"></div>
@@ -378,60 +312,35 @@
       </div>
     </section>
 
-    <!-- ── SETTINGS PAGE ── -->
     <section id="page-settings" class="page hidden">
       <div class="page-inner">
         <h2 class="page-h2">الإعدادات</h2>
-        
         <div class="settings-group">
           <div class="settings-label">المظهر</div>
           <div class="setting-item">
-            <div class="setting-info">
-              <span class="setting-name">الوضع الليلي</span>
-              <span class="setting-desc">تفعيل/إيقاف الوضع المظلم</span>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" id="dark-mode-toggle" checked onchange="toggleDarkMode()" />
-              <span class="toggle-slider"></span>
-            </label>
+            <div class="setting-info"><span class="setting-name">الوضع الليلي</span><span class="setting-desc">تفعيل/إيقاف الوضع المظلم</span></div>
+            <label class="toggle"><input type="checkbox" id="dark-mode-toggle" checked onchange="toggleDarkMode()" /><span class="toggle-slider"></span></label>
           </div>
           <div class="setting-item">
-            <div class="setting-info">
-              <span class="setting-name">اللغة</span>
-            </div>
-            <select class="setting-select" onchange="switchLang(this.value)">
-              <option value="ar">العربية</option>
-              <option value="en">English</option>
-            </select>
+            <div class="setting-info"><span class="setting-name">اللغة</span></div>
+            <select class="setting-select" onchange="switchLang(this.value)"><option value="ar">العربية</option><option value="en">English</option></select>
           </div>
         </div>
-
         <div class="settings-group">
           <div class="settings-label">التذكيرات</div>
           <div class="setting-item">
-            <div class="setting-info">
-              <span class="setting-name">الإشعارات</span>
-              <span class="setting-desc">السماح بالإشعارات</span>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" id="notif-toggle" onchange="requestNotifications()" />
-              <span class="toggle-slider"></span>
-            </label>
+            <div class="setting-info"><span class="setting-name">الإشعارات</span><span class="setting-desc">السماح بالإشعارات</span></div>
+            <label class="toggle"><input type="checkbox" id="notif-toggle" onchange="requestNotifications()" /><span class="toggle-slider"></span></label>
           </div>
         </div>
-
         <div class="settings-group">
           <div class="settings-label">الحساب</div>
           <div class="setting-item">
-            <div class="setting-info">
-              <span class="setting-name" id="set-name">الاسم</span>
-              <span class="setting-desc" id="set-email">البريد</span>
-            </div>
+            <div class="setting-info"><span class="setting-name" id="set-name">الاسم</span><span class="setting-desc" id="set-email">البريد</span></div>
             <button class="btn-sm" onclick="openEditProfile()">تعديل</button>
           </div>
           <button class="btn-danger btn-full" style="margin-top:12px" onclick="logout()">تسجيل الخروج</button>
         </div>
-
         <div class="settings-group">
           <div class="settings-label">البيانات</div>
           <button class="btn-secondary btn-full" onclick="exportData()">📤 تصدير البيانات</button>
@@ -440,17 +349,13 @@
       </div>
     </section>
 
-    <!-- ── ABOUT PAGE ── -->
     <section id="page-about" class="page hidden">
       <div class="page-inner">
         <div class="about-hero">
-          <div class="about-avatar">
-            <span>RA</span>
-          </div>
+          <div class="about-avatar"><span>RA</span></div>
           <h2 class="about-name">راغب علي</h2>
           <p class="about-title">Full-Stack Developer & UI/UX Designer</p>
         </div>
-
         <div class="about-app">
           <div class="about-app-icon">
             <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
@@ -459,23 +364,15 @@
               <defs><linearGradient id="grad3" x1="4" y1="4" x2="56" y2="56" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#6C63FF"/><stop offset="100%" stop-color="#FF6584"/></linearGradient></defs>
             </svg>
           </div>
-          <div>
-            <h3>TaskFlow Pro</h3>
-            <p class="text-muted">الإصدار 1.0.0</p>
-          </div>
+          <div><h3>TaskFlow Pro</h3><p class="text-muted">الإصدار 1.0.0</p></div>
         </div>
-
-        <div class="about-desc">
-          <p>TaskFlow Pro هو تطبيق متكامل لإدارة المهام والإنتاجية، تم تصميمه وبرمجته بالكامل بواسطة راغب علي. يهدف التطبيق إلى مساعدة الأفراد والفرق على تنظيم يومهم بفعالية عالية.</p>
-        </div>
-
+        <div class="about-desc"><p>TaskFlow Pro هو تطبيق متكامل لإدارة المهام والإنتاجية، تم تصميمه وبرمجته بالكامل بواسطة راغب علي.</p></div>
         <div class="about-links">
           <a href="https://t.me/xd_8z" target="_blank" class="about-link telegram">
             <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.14 13.48l-2.968-.927c-.644-.203-.657-.644.136-.953l11.57-4.461c.537-.194 1.006.131.836.936z"/></svg>
             Telegram: @xd_8z
           </a>
         </div>
-
         <div class="about-features">
           <h3>مميزات التطبيق</h3>
           <div class="feature-list">
@@ -489,7 +386,6 @@
             <div class="feature-item">🎨 تصميم احترافي</div>
           </div>
         </div>
-
         <div class="about-footer">
           <p>© 2024 TaskFlow Pro</p>
           <p>Developed with ❤️ by <strong>راغب علي</strong></p>
@@ -500,7 +396,6 @@
 
   </main>
 
-  <!-- Bottom Navigation -->
   <nav class="bottom-nav">
     <button class="bnav-item active" onclick="navigate('home')" data-page="home">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
@@ -523,11 +418,9 @@
     </button>
   </nav>
 
-</div><!-- /app -->
+</div>
 
-<!-- ══════════════════════════════════════════ -->
-<!--              ADD TASK MODAL               -->
-<!-- ══════════════════════════════════════════ -->
+<!-- ADD TASK MODAL -->
 <div class="modal-overlay" id="add-task-modal">
   <div class="modal bottom-sheet" id="add-task-sheet">
     <div class="sheet-handle"></div>
@@ -538,25 +431,15 @@
     <div class="sheet-body">
       <input type="text" id="task-title-input" class="task-main-input" placeholder="عنوان المهمة..." maxlength="200" />
       <textarea id="task-notes-input" class="task-notes" placeholder="ملاحظات (اختياري)..." rows="3"></textarea>
-
       <div class="task-options">
-        <!-- Priority -->
         <div class="option-row">
           <label>الأولوية</label>
           <div class="priority-picker" id="priority-picker">
-            <button class="pri-btn active" data-p="high" onclick="setPriority('high', this)">
-              <span class="pri-dot high"></span> عاجل
-            </button>
-            <button class="pri-btn" data-p="medium" onclick="setPriority('medium', this)">
-              <span class="pri-dot medium"></span> متوسط
-            </button>
-            <button class="pri-btn" data-p="low" onclick="setPriority('low', this)">
-              <span class="pri-dot low"></span> منخفض
-            </button>
+            <button class="pri-btn active" data-p="high" onclick="setPriority('high', this)"><span class="pri-dot high"></span> عاجل</button>
+            <button class="pri-btn" data-p="medium" onclick="setPriority('medium', this)"><span class="pri-dot medium"></span> متوسط</button>
+            <button class="pri-btn" data-p="low" onclick="setPriority('low', this)"><span class="pri-dot low"></span> منخفض</button>
           </div>
         </div>
-
-        <!-- Date/Time -->
         <div class="option-row">
           <label>التاريخ والوقت</label>
           <div class="dt-row">
@@ -564,8 +447,6 @@
             <input type="time" id="task-time" class="dt-input" />
           </div>
         </div>
-
-        <!-- Reminder -->
         <div class="option-row">
           <label>التذكير</label>
           <select id="task-reminder" class="setting-select">
@@ -576,8 +457,6 @@
             <option value="1440">قبل يوم</option>
           </select>
         </div>
-
-        <!-- Repeat -->
         <div class="option-row">
           <label>التكرار</label>
           <select id="task-repeat" class="setting-select">
@@ -587,16 +466,12 @@
             <option value="monthly">شهري</option>
           </select>
         </div>
-
-        <!-- Project -->
         <div class="option-row">
           <label>المشروع</label>
           <select id="task-project" class="setting-select">
             <option value="">بدون مشروع</option>
           </select>
         </div>
-
-        <!-- Tags -->
         <div class="option-row">
           <label>الوسوم</label>
           <input type="text" id="task-tags" class="dt-input" placeholder="tag1, tag2..." />
@@ -613,9 +488,7 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════ -->
-<!--           ADD PROJECT MODAL               -->
-<!-- ══════════════════════════════════════════ -->
+<!-- ADD PROJECT MODAL -->
 <div class="modal-overlay" id="add-project-modal">
   <div class="modal center-modal">
     <div class="modal-header">
@@ -643,27 +516,50 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════ -->
-<!--              TOAST CONTAINER              -->
-<!-- ══════════════════════════════════════════ -->
+<!-- TOAST -->
 <div id="toast-container" class="toast-container"></div>
 
-<!-- ══════════════════════════════════════════ -->
-<!--              NOTIFICATION BELL            -->
-<!-- ══════════════════════════════════════════ -->
+<!-- NOTIF POPUP -->
 <div id="notif-popup" class="notif-popup hidden">
-  <div class="notif-header">
-    <span>🔔 تذكير</span>
-    <button onclick="closeNotif()">✕</button>
-  </div>
+  <div class="notif-header"><span>🔔 تذكير</span><button onclick="closeNotif()">✕</button></div>
   <div id="notif-body" class="notif-body"></div>
   <button class="btn-sm" onclick="closeNotif()">حسناً</button>
 </div>
 
 <!-- ══════════════════════════════════════════ -->
-<!--            FIREBASE + APP JS              -->
+<!--   FIREBASE SDK + APP SCRIPT               -->
 <!-- ══════════════════════════════════════════ -->
-<script type="module" src="app.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyDPLik6gKOjaoPWPvZosewetivsHujUzA8",
+    authDomain: "taskflow-pro-f508d.firebaseapp.com",
+    projectId: "taskflow-pro-f508d",
+    storageBucket: "taskflow-pro-f508d.firebasestorage.app",
+    messagingSenderId: "165113319243",
+    appId: "1:165113319243:web:40896204caa4e05ee0a2ce"
+  };
+
+  const firebaseApp = initializeApp(FIREBASE_CONFIG);
+  window._auth = getAuth(firebaseApp);
+  window._db = getFirestore(firebaseApp);
+  window._GoogleAuthProvider = GoogleAuthProvider;
+  window._signInWithPopup = signInWithPopup;
+  window._signInWithEmailAndPassword = signInWithEmailAndPassword;
+  window._createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+  window._signOut = signOut;
+  window._doc = doc;
+  window._setDoc = setDoc;
+
+  // Signal that Firebase is ready
+  window._firebaseReady = true;
+  document.dispatchEvent(new Event('firebaseReady'));
+</script>
+
+<script src="app.js"></script>
 
 </body>
 </html>
