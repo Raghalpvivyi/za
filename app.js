@@ -5,26 +5,6 @@
  */
 
 // ══════════════════════════════════════════════════════════
-//  FIREBASE IMPORTS & CONFIG
-// ══════════════════════════════════════════════════════════
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, collection, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyDPLik6gKOjaoPWPvZosewetivsHujUzA8",
-  authDomain: "taskflow-pro-f508d.firebaseapp.com",
-  projectId: "taskflow-pro-f508d",
-  storageBucket: "taskflow-pro-f508d.firebasestorage.app",
-  messagingSenderId: "165113319243",
-  appId: "1:165113319243:web:40896204caa4e05ee0a2ce"
-};
-
-const firebaseApp = initializeApp(FIREBASE_CONFIG);
-const auth = getAuth(firebaseApp);
-const db = getFirestore(firebaseApp);
-
-// ══════════════════════════════════════════════════════════
 //  APP STATE
 // ══════════════════════════════════════════════════════════
 const state = {
@@ -34,10 +14,8 @@ const state = {
   currentFilter: 'all',
   currentPage: 'home',
   editingTaskId: null,
-  editingProjectId: null,
   selectedColor: '#6C63FF',
   selectedPriority: 'high',
-  reminders: [],
   darkMode: true,
   lang: 'ar',
 };
@@ -53,41 +31,38 @@ const store = {
 // ══════════════════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════════════════
-async function init() {
-  state.tasks = store.get('tasks', []);
+function init() {
+  state.tasks    = store.get('tasks', []);
   state.projects = store.get('projects', [
     { id: 'p1', name: 'شخصي', color: '#6C63FF' },
-    { id: 'p2', name: 'عمل', color: '#10B981' },
+    { id: 'p2', name: 'عمل',  color: '#10B981' },
   ]);
   state.darkMode = store.get('darkMode', true);
-  state.lang = store.get('lang', 'ar');
+  state.lang     = store.get('lang', 'ar');
 
   applyTheme();
   applyLang();
 
-  await delay(2400);
-  hideSplash();
-
-  const savedUser = store.get('user', null);
-  if (savedUser) {
-    state.user = savedUser;
-    showApp();
-  } else {
-    showAuth();
-  }
+  // Wait for splash then show app
+  setTimeout(() => {
+    hideSplash();
+    const savedUser = store.get('user', null);
+    if (savedUser) {
+      state.user = savedUser;
+      showApp();
+    } else {
+      showAuth();
+    }
+  }, 2400);
 
   startReminderCheck();
-
-  if ('Notification' in window && Notification.permission === 'granted') {
-    document.getElementById('notif-toggle').checked = true;
-  }
 }
 
 // ══════════════════════════════════════════════════════════
 //  THEME & LANGUAGE
 // ══════════════════════════════════════════════════════════
 function applyTheme() {
-  document.body.classList.toggle('dark-mode', state.darkMode);
+  document.body.classList.toggle('dark-mode',  state.darkMode);
   document.body.classList.toggle('light-mode', !state.darkMode);
   const t = document.getElementById('dark-mode-toggle');
   if (t) t.checked = state.darkMode;
@@ -102,7 +77,7 @@ function toggleDarkMode() {
 
 function applyLang() {
   document.documentElement.lang = state.lang;
-  document.documentElement.dir = state.lang === 'ar' ? 'rtl' : 'ltr';
+  document.documentElement.dir  = state.lang === 'ar' ? 'rtl' : 'ltr';
 }
 
 function switchLang(lang) {
@@ -117,7 +92,10 @@ function switchLang(lang) {
 // ══════════════════════════════════════════════════════════
 function hideSplash() {
   const s = document.getElementById('splash-screen');
-  if (s) { s.style.opacity = '0'; s.style.transition = 'opacity .4s'; setTimeout(() => s.remove(), 400); }
+  if (!s) return;
+  s.style.opacity    = '0';
+  s.style.transition = 'opacity .4s';
+  setTimeout(() => s.remove(), 400);
 }
 
 function showAuth() {
@@ -135,8 +113,10 @@ function showApp() {
 //  AUTH
 // ══════════════════════════════════════════════════════════
 function switchAuthTab(tab) {
-  document.querySelectorAll('.auth-tab').forEach((b, i) => b.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register')));
-  document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
+  document.querySelectorAll('.auth-tab').forEach((b, i) =>
+    b.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'))
+  );
+  document.getElementById('login-form').classList.toggle('hidden',    tab !== 'login');
   document.getElementById('register-form').classList.toggle('hidden', tab !== 'register');
 }
 
@@ -147,65 +127,80 @@ function togglePass(id) {
 
 async function loginEmail() {
   const email = document.getElementById('login-email').value.trim();
-  const pass = document.getElementById('login-pass').value;
+  const pass  = document.getElementById('login-pass').value;
   if (!email || !pass) { showToast('يرجى ملء جميع الحقول', 'error'); return; }
-  try {
-    const result = await signInWithEmailAndPassword(auth, email, pass);
-    const user = result.user;
-    await saveUserToFirestore(user.uid, { email: user.email, name: user.displayName || email.split('@')[0] });
-    completeLogin({ uid: user.uid, email: user.email, name: user.displayName || email.split('@')[0], avatar: user.photoURL || '' });
-  } catch (e) {
-    showToast('خطأ: ' + translateFirebaseError(e.code), 'error');
+
+  if (window._auth) {
+    try {
+      const result = await window._signInWithEmailAndPassword(window._auth, email, pass);
+      const u = result.user;
+      await saveUserToFirestore(u.uid, { email: u.email, name: u.displayName || email.split('@')[0] });
+      completeLogin({ uid: u.uid, email: u.email, name: u.displayName || email.split('@')[0], avatar: u.photoURL || '' });
+    } catch (e) {
+      showToast('خطأ: ' + translateFirebaseError(e.code), 'error');
+    }
+  } else {
+    // Fallback (demo mode)
+    completeLogin({ uid: 'local_' + Date.now(), email, name: email.split('@')[0], avatar: '' });
   }
 }
 
 async function registerEmail() {
-  const name = document.getElementById('reg-name').value.trim();
+  const name  = document.getElementById('reg-name').value.trim();
   const email = document.getElementById('reg-email').value.trim();
-  const pass = document.getElementById('reg-pass').value;
+  const pass  = document.getElementById('reg-pass').value;
   if (!name || !email || !pass) { showToast('يرجى ملء جميع الحقول', 'error'); return; }
   if (pass.length < 6) { showToast('كلمة المرور 6 أحرف على الأقل', 'error'); return; }
-  try {
-    const result = await createUserWithEmailAndPassword(auth, email, pass);
-    const user = result.user;
-    await saveUserToFirestore(user.uid, { email, name });
-    completeLogin({ uid: user.uid, email, name, avatar: '' });
-  } catch (e) {
-    showToast('خطأ: ' + translateFirebaseError(e.code), 'error');
+
+  if (window._auth) {
+    try {
+      const result = await window._createUserWithEmailAndPassword(window._auth, email, pass);
+      const u = result.user;
+      await saveUserToFirestore(u.uid, { email, name });
+      completeLogin({ uid: u.uid, email, name, avatar: '' });
+    } catch (e) {
+      showToast('خطأ: ' + translateFirebaseError(e.code), 'error');
+    }
+  } else {
+    completeLogin({ uid: 'local_' + Date.now(), email, name, avatar: '' });
   }
 }
 
 async function loginGoogle() {
-  try {
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    const user = result.user;
-    await saveUserToFirestore(user.uid, { email: user.email, name: user.displayName, avatar: user.photoURL });
-    completeLogin({ uid: user.uid, email: user.email, name: user.displayName, avatar: user.photoURL || '' });
-  } catch (e) {
-    showToast('خطأ في تسجيل الدخول بـ Google', 'error');
+  if (window._auth) {
+    try {
+      const provider = new window._GoogleAuthProvider();
+      const result   = await window._signInWithPopup(window._auth, provider);
+      const u = result.user;
+      await saveUserToFirestore(u.uid, { email: u.email, name: u.displayName, avatar: u.photoURL });
+      completeLogin({ uid: u.uid, email: u.email, name: u.displayName, avatar: u.photoURL || '' });
+    } catch (e) {
+      showToast('خطأ في تسجيل الدخول بـ Google: ' + translateFirebaseError(e.code), 'error');
+    }
+  } else {
+    showToast('Firebase غير متاح حالياً', 'error');
   }
 }
 
 function loginFacebook() {
-  const u = { uid: 'fb_' + Date.now(), email: 'user@facebook.com', name: 'مستخدم Facebook', avatar: '' };
-  completeLogin(u);
+  completeLogin({ uid: 'fb_' + Date.now(), email: 'user@facebook.com', name: 'مستخدم Facebook', avatar: '' });
 }
 
 function loginDemo() {
-  const u = { uid: 'demo_' + Date.now(), email: 'demo@taskflow.pro', name: 'المستخدم التجريبي', avatar: '' };
-  completeLogin(u);
+  completeLogin({ uid: 'demo_' + Date.now(), email: 'demo@taskflow.pro', name: 'المستخدم التجريبي', avatar: '' });
 }
 
 function completeLogin(user) {
   state.user = user;
   store.set('user', user);
-  showToast(`✅ مرحباً ${user.name}!`, 'success');
+  showToast('✅ مرحباً ' + user.name + '!', 'success');
   showApp();
 }
 
 async function logout() {
-  try { await signOut(auth); } catch (e) {}
+  if (window._auth && window._signOut) {
+    try { await window._signOut(window._auth); } catch (e) {}
+  }
   state.user = null;
   store.set('user', null);
   document.getElementById('app').classList.add('hidden');
@@ -224,18 +219,18 @@ function updateUserUI() {
   document.getElementById('user-initial').textContent = initial;
   if (avatar) document.getElementById('user-avatar').src = avatar;
 
-  document.getElementById('sidebar-name').textContent = name || 'المستخدم';
-  document.getElementById('sidebar-email').textContent = email || '';
+  document.getElementById('sidebar-name').textContent          = name  || 'المستخدم';
+  document.getElementById('sidebar-email').textContent         = email || '';
   document.getElementById('sidebar-avatar-initial').textContent = initial;
   if (avatar) document.getElementById('sidebar-avatar-img').src = avatar;
 
-  document.getElementById('set-name').textContent = name || 'الاسم';
+  document.getElementById('set-name').textContent  = name  || 'الاسم';
   document.getElementById('set-email').textContent = email || 'البريد';
 
-  const hour = new Date().getHours();
-  let greet = hour < 12 ? 'صباح الخير ☀️' : hour < 17 ? 'مساء الخير 🌤' : 'مساء النور 🌙';
+  const hour  = new Date().getHours();
+  const greet = hour < 12 ? 'صباح الخير ☀️' : hour < 17 ? 'مساء الخير 🌤' : 'مساء النور 🌙';
   document.getElementById('greeting-time').textContent = greet;
-  document.getElementById('greeting-name').textContent = `مرحباً، ${(name || 'صديقي').split(' ')[0]}!`;
+  document.getElementById('greeting-name').textContent = 'مرحباً، ' + (name || 'صديقي').split(' ')[0] + '!';
 
   const quotes = [
     'كل يوم هو فرصة جديدة للتفوق.',
@@ -255,39 +250,34 @@ function navigate(page) {
   state.currentPage = page;
   closeSidebar();
 
-  document.querySelectorAll('.page').forEach(p => {
-    p.classList.toggle('active', false);
-    p.classList.add('hidden');
-  });
+  document.querySelectorAll('.page').forEach(p => { p.classList.add('hidden'); p.classList.remove('active'); });
   const target = document.getElementById('page-' + page);
   if (target) { target.classList.remove('hidden'); target.classList.add('active'); }
 
   document.querySelectorAll('.bnav-item[data-page]').forEach(b => b.classList.toggle('active', b.dataset.page === page));
-
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-  const navMap = { home: 0, today: 1, upcoming: 2, completed: 3, dashboard: 4 };
-  const allNavItems = document.querySelectorAll('.sidebar-nav .nav-item');
-  if (navMap[page] !== undefined && allNavItems[navMap[page]]) allNavItems[navMap[page]].classList.add('active');
 
-  const titles = { home: 'مهامي', today: 'مهام اليوم', upcoming: 'المهام القادمة', completed: 'المكتملة', dashboard: 'الإنتاجية', settings: 'الإعدادات', about: 'عن المطور' };
+  const navMap = { home:0, today:1, upcoming:2, completed:3, dashboard:4 };
+  const items  = document.querySelectorAll('.sidebar-nav .nav-item');
+  if (navMap[page] !== undefined && items[navMap[page]]) items[navMap[page]].classList.add('active');
+
+  const titles = { home:'مهامي', today:'مهام اليوم', upcoming:'المهام القادمة', completed:'المكتملة', dashboard:'الإنتاجية', settings:'الإعدادات', about:'عن المطور' };
   document.getElementById('page-title').textContent = titles[page] || page;
 
-  if (page === 'home') renderHome();
-  else if (page === 'today') renderTodayPage();
-  else if (page === 'upcoming') renderUpcomingPage();
+  if      (page === 'home')      renderHome();
+  else if (page === 'today')     renderTodayPage();
+  else if (page === 'upcoming')  renderUpcomingPage();
   else if (page === 'completed') renderCompletedPage();
   else if (page === 'dashboard') renderDashboard();
-  else if (page === 'settings') renderSettings();
+  else if (page === 'settings')  renderSettings();
 }
 
 // ══════════════════════════════════════════════════════════
 //  SIDEBAR
 // ══════════════════════════════════════════════════════════
 function toggleSidebar() {
-  const sb = document.getElementById('sidebar');
-  const ov = document.getElementById('sidebar-overlay');
-  sb.classList.toggle('open');
-  ov.classList.toggle('open');
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
 }
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
@@ -298,8 +288,7 @@ function closeSidebar() {
 //  SEARCH
 // ══════════════════════════════════════════════════════════
 function openSearch() {
-  const sb = document.getElementById('search-bar');
-  sb.classList.add('open');
+  document.getElementById('search-bar').classList.add('open');
   document.getElementById('search-input').focus();
 }
 function closeSearch() {
@@ -313,7 +302,7 @@ function searchTasks() {
   const filtered = state.tasks.filter(t =>
     t.title.toLowerCase().includes(q) ||
     (t.notes || '').toLowerCase().includes(q) ||
-    (t.tags || []).some(tag => tag.toLowerCase().includes(q))
+    (t.tags  || []).some(tag => tag.toLowerCase().includes(q))
   );
   renderTasksList(filtered, 'tasks-list');
   updateTasksCount(filtered.length);
@@ -330,14 +319,14 @@ function setFilter(filter, btn) {
 }
 
 function getFilteredTasks() {
-  const todayStr = formatDate(new Date());
+  const today = formatDate(new Date());
   switch (state.currentFilter) {
-    case 'today': return state.tasks.filter(t => t.date === todayStr && !t.completed);
-    case 'high': return state.tasks.filter(t => t.priority === 'high' && !t.completed);
-    case 'medium': return state.tasks.filter(t => t.priority === 'medium' && !t.completed);
-    case 'low': return state.tasks.filter(t => t.priority === 'low' && !t.completed);
+    case 'today':     return state.tasks.filter(t => t.date === today && !t.completed);
+    case 'high':      return state.tasks.filter(t => t.priority === 'high'   && !t.completed);
+    case 'medium':    return state.tasks.filter(t => t.priority === 'medium' && !t.completed);
+    case 'low':       return state.tasks.filter(t => t.priority === 'low'    && !t.completed);
     case 'completed': return state.tasks.filter(t => t.completed);
-    default: return [...state.tasks];
+    default:          return [...state.tasks];
   }
 }
 
@@ -360,19 +349,16 @@ function renderHome() {
 }
 
 function updateStats() {
-  const done = state.tasks.filter(t => t.completed).length;
-  const pending = state.tasks.filter(t => !t.completed).length;
-  document.getElementById('stats-done').textContent = done;
-  document.getElementById('stats-pending').textContent = pending;
+  document.getElementById('stats-done').textContent    = state.tasks.filter(t =>  t.completed).length;
+  document.getElementById('stats-pending').textContent = state.tasks.filter(t => !t.completed).length;
 }
 
 function updateProgress() {
   const today = formatDate(new Date());
-  const todayTasks = state.tasks.filter(t => t.date === today || !t.date);
-  const done = todayTasks.filter(t => t.completed).length;
-  const total = todayTasks.length;
-  const pct = total === 0 ? 0 : Math.round((done / total) * 100);
-  document.getElementById('progress-fill').style.width = pct + '%';
+  const all   = state.tasks.filter(t => t.date === today || !t.date);
+  const done  = all.filter(t => t.completed).length;
+  const pct   = all.length === 0 ? 0 : Math.round((done / all.length) * 100);
+  document.getElementById('progress-fill').style.width    = pct + '%';
   document.getElementById('progress-percent').textContent = pct + '%';
 }
 
@@ -390,38 +376,38 @@ function renderTasksList(tasks, containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
+  const empty = document.getElementById('empty-state');
+
   if (tasks.length === 0) {
     container.innerHTML = '';
-    const empty = document.getElementById('empty-state');
     if (empty && containerId === 'tasks-list') empty.classList.remove('hidden');
     return;
   }
 
-  const empty = document.getElementById('empty-state');
   if (empty) empty.classList.add('hidden');
 
-  const priorityOrder = { high: 0, medium: 1, low: 2 };
+  const order = { high:0, medium:1, low:2 };
   const sorted = [...tasks].sort((a, b) => {
     if (a.completed !== b.completed) return a.completed ? 1 : -1;
-    if (a.priority !== b.priority) return (priorityOrder[a.priority] || 1) - (priorityOrder[b.priority] || 1);
+    if (a.priority  !== b.priority)  return (order[a.priority]||1) - (order[b.priority]||1);
     if (a.date && b.date) return new Date(a.date) - new Date(b.date);
     return 0;
   });
 
-  container.innerHTML = sorted.map(task => renderTaskCard(task)).join('');
+  container.innerHTML = sorted.map(renderTaskCard).join('');
 }
 
 function renderTaskCard(task) {
   const today = formatDate(new Date());
   let dateClass = '', dateLabel = '';
   if (task.date) {
-    if (task.date < today) { dateClass = 'overdue'; dateLabel = '⚠ متأخرة'; }
+    if      (task.date < today) { dateClass = 'overdue'; dateLabel = '⚠ متأخرة'; }
     else if (task.date === today) { dateClass = 'today'; dateLabel = '📅 اليوم'; }
     else { dateLabel = '📅 ' + task.date; }
     if (task.time) dateLabel += ' ' + task.time;
   }
-
   const project = state.projects.find(p => p.id === task.projectId);
+  const priLabel = task.priority === 'high' ? 'عاجل' : task.priority === 'medium' ? 'متوسط' : 'منخفض';
 
   return `
     <div class="task-card priority-${task.priority} ${task.completed ? 'completed' : ''}" id="tc-${task.id}">
@@ -430,26 +416,25 @@ function renderTaskCard(task) {
         <div class="task-title">${escHtml(task.title)}</div>
         ${task.notes ? `<div class="task-notes-preview">${escHtml(task.notes)}</div>` : ''}
         <div class="task-meta">
-          <span class="priority-badge ${task.priority}">${task.priority === 'high' ? 'عاجل' : task.priority === 'medium' ? 'متوسط' : 'منخفض'}</span>
+          <span class="priority-badge ${task.priority}">${priLabel}</span>
           ${dateLabel ? `<span class="task-date ${dateClass}">${dateLabel}</span>` : ''}
           ${project ? `<span class="task-tag" style="background:${project.color}22;color:${project.color}">${escHtml(project.name)}</span>` : ''}
-          ${(task.tags || []).map(t => `<span class="task-tag">${escHtml(t)}</span>`).join('')}
-          ${task.reminder ? `<span class="task-date">🔔</span>` : ''}
-          ${task.repeat ? `<span class="task-date">🔄</span>` : ''}
+          ${(task.tags||[]).map(t=>`<span class="task-tag">${escHtml(t)}</span>`).join('')}
+          ${task.reminder ? '<span class="task-date">🔔</span>' : ''}
+          ${task.repeat   ? '<span class="task-date">🔄</span>' : ''}
         </div>
       </div>
       <div class="task-actions">
-        <button class="task-action-btn edit" onclick="openEditTask('${task.id}')">✏</button>
+        <button class="task-action-btn edit"   onclick="openEditTask('${task.id}')">✏</button>
         <button class="task-action-btn delete" onclick="deleteTask('${task.id}')">🗑</button>
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
 function renderTodayPage() {
   const today = formatDate(new Date());
   const tasks = state.tasks.filter(t => t.date === today);
-  document.getElementById('today-date').textContent = new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  document.getElementById('today-date').textContent = new Date().toLocaleDateString('ar-EG', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
   renderTasksList(tasks, 'today-tasks');
   document.getElementById('today-empty').classList.toggle('hidden', tasks.length > 0);
 }
@@ -457,7 +442,7 @@ function renderTodayPage() {
 function renderUpcomingPage() {
   const today = formatDate(new Date());
   const tasks = state.tasks.filter(t => t.date && t.date > today && !t.completed);
-  tasks.sort((a, b) => new Date(a.date) - new Date(b.date));
+  tasks.sort((a,b) => new Date(a.date) - new Date(b.date));
   renderTasksList(tasks, 'upcoming-tasks');
   document.getElementById('upcoming-empty').classList.toggle('hidden', tasks.length > 0);
 }
@@ -469,67 +454,52 @@ function renderCompletedPage() {
 }
 
 function renderDashboard() {
-  const total = state.tasks.length;
-  const completed = state.tasks.filter(t => t.completed).length;
-  const pending = state.tasks.filter(t => !t.completed).length;
-  const rate = total === 0 ? 0 : Math.round((completed / total) * 100);
+  const total     = state.tasks.length;
+  const completed = state.tasks.filter(t =>  t.completed).length;
+  const pending   = state.tasks.filter(t => !t.completed).length;
+  const rate      = total === 0 ? 0 : Math.round((completed / total) * 100);
 
   document.getElementById('d-completed').textContent = completed;
-  document.getElementById('d-pending').textContent = pending;
-  document.getElementById('d-rate').textContent = rate + '%';
-  document.getElementById('d-streak').textContent = Math.min(completed, 30);
+  document.getElementById('d-pending').textContent   = pending;
+  document.getElementById('d-rate').textContent      = rate + '%';
+  document.getElementById('d-streak').textContent    = Math.min(completed, 30);
 
   renderWeeklyChart();
   renderPriorityDist();
 }
 
 function renderWeeklyChart() {
-  const days = ['أح', 'إث', 'ثل', 'أر', 'خم', 'جم', 'سب'];
-  const now = new Date();
-  const chartData = [];
+  const days = ['أح','إث','ثل','أر','خم','جم','سب'];
+  const now  = new Date();
+  const data = [];
   for (let i = 6; i >= 0; i--) {
-    const d = new Date(now); d.setDate(d.getDate() - i);
+    const d  = new Date(now); d.setDate(d.getDate() - i);
     const ds = formatDate(d);
-    const count = state.tasks.filter(t => t.completedAt && t.completedAt.startsWith(ds)).length;
-    chartData.push({ day: days[d.getDay()], count });
+    data.push({ day: days[d.getDay()], count: state.tasks.filter(t => t.completedAt && t.completedAt.startsWith(ds)).length });
   }
-  const max = Math.max(...chartData.map(d => d.count), 1);
-  document.getElementById('weekly-chart').innerHTML = chartData.map(d => `
+  const max = Math.max(...data.map(d => d.count), 1);
+  document.getElementById('weekly-chart').innerHTML = data.map(d => `
     <div class="bar-item">
-      <div class="bar-fill" style="height:${Math.max((d.count / max) * 70, 4)}px"></div>
+      <div class="bar-fill" style="height:${Math.max((d.count/max)*70,4)}px"></div>
       <span class="bar-label">${d.day}</span>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 function renderPriorityDist() {
-  const high = state.tasks.filter(t => t.priority === 'high').length;
-  const med = state.tasks.filter(t => t.priority === 'medium').length;
-  const low = state.tasks.filter(t => t.priority === 'low').length;
+  const high  = state.tasks.filter(t => t.priority === 'high').length;
+  const med   = state.tasks.filter(t => t.priority === 'medium').length;
+  const low   = state.tasks.filter(t => t.priority === 'low').length;
   const total = Math.max(state.tasks.length, 1);
   document.getElementById('priority-dist').innerHTML = `
-    <div class="dist-row">
-      <span class="dist-label" style="color:var(--high)">عاجل</span>
-      <div class="dist-track"><div class="dist-fill" style="width:${(high/total)*100}%;background:var(--high)"></div></div>
-      <span class="dist-count">${high}</span>
-    </div>
-    <div class="dist-row">
-      <span class="dist-label" style="color:var(--medium)">متوسط</span>
-      <div class="dist-track"><div class="dist-fill" style="width:${(med/total)*100}%;background:var(--medium)"></div></div>
-      <span class="dist-count">${med}</span>
-    </div>
-    <div class="dist-row">
-      <span class="dist-label" style="color:var(--low)">منخفض</span>
-      <div class="dist-track"><div class="dist-fill" style="width:${(low/total)*100}%;background:var(--low)"></div></div>
-      <span class="dist-count">${low}</span>
-    </div>
-  `;
+    <div class="dist-row"><span class="dist-label" style="color:var(--high)">عاجل</span><div class="dist-track"><div class="dist-fill" style="width:${(high/total)*100}%;background:var(--high)"></div></div><span class="dist-count">${high}</span></div>
+    <div class="dist-row"><span class="dist-label" style="color:var(--medium)">متوسط</span><div class="dist-track"><div class="dist-fill" style="width:${(med/total)*100}%;background:var(--medium)"></div></div><span class="dist-count">${med}</span></div>
+    <div class="dist-row"><span class="dist-label" style="color:var(--low)">منخفض</span><div class="dist-track"><div class="dist-fill" style="width:${(low/total)*100}%;background:var(--low)"></div></div><span class="dist-count">${low}</span></div>`;
 }
 
 function renderSettings() {
   document.getElementById('dark-mode-toggle').checked = state.darkMode;
   if (state.user) {
-    document.getElementById('set-name').textContent = state.user.name || 'الاسم';
+    document.getElementById('set-name').textContent  = state.user.name  || 'الاسم';
     document.getElementById('set-email').textContent = state.user.email || 'البريد';
   }
 }
@@ -539,23 +509,20 @@ function renderSidebarProjects() {
   if (!container) return;
   container.innerHTML = state.projects.map(p => {
     const count = state.tasks.filter(t => t.projectId === p.id && !t.completed).length;
-    return `
-      <button class="project-nav-item" onclick="filterByProject('${p.id}')">
-        <span class="project-dot" style="background:${p.color}"></span>
-        <span>${escHtml(p.name)}</span>
-        ${count > 0 ? `<span class="nav-badge" style="margin-right:auto;background:${p.color}">${count}</span>` : ''}
-      </button>
-    `;
+    return `<button class="project-nav-item" onclick="filterByProject('${p.id}')">
+      <span class="project-dot" style="background:${p.color}"></span>
+      <span>${escHtml(p.name)}</span>
+      ${count > 0 ? `<span class="nav-badge" style="margin-right:auto;background:${p.color}">${count}</span>` : ''}
+    </button>`;
   }).join('');
 }
 
-function filterByProject(projectId) {
-  closeSidebar();
-  navigate('home');
-  const proj = state.projects.find(p => p.id === projectId);
+function filterByProject(id) {
+  closeSidebar(); navigate('home');
+  const proj = state.projects.find(p => p.id === id);
   if (!proj) return;
-  const filtered = state.tasks.filter(t => t.projectId === projectId);
   document.getElementById('page-title').textContent = proj.name;
+  const filtered = state.tasks.filter(t => t.projectId === id);
   renderTasksList(filtered, 'tasks-list');
   updateTasksCount(filtered.length);
 }
@@ -568,11 +535,11 @@ function openAddTask() {
   document.getElementById('task-modal-title').textContent = 'مهمة جديدة';
   document.getElementById('task-title-input').value = '';
   document.getElementById('task-notes-input').value = '';
-  document.getElementById('task-date').value = formatDate(new Date());
-  document.getElementById('task-time').value = '';
-  document.getElementById('task-reminder').value = '';
-  document.getElementById('task-repeat').value = '';
-  document.getElementById('task-tags').value = '';
+  document.getElementById('task-date').value         = formatDate(new Date());
+  document.getElementById('task-time').value         = '';
+  document.getElementById('task-reminder').value     = '';
+  document.getElementById('task-repeat').value       = '';
+  document.getElementById('task-tags').value         = '';
   state.selectedPriority = 'high';
   document.querySelectorAll('.pri-btn').forEach(b => b.classList.toggle('active', b.dataset.p === 'high'));
   updateProjectSelect();
@@ -586,11 +553,11 @@ function openEditTask(id) {
   document.getElementById('task-modal-title').textContent = 'تعديل المهمة';
   document.getElementById('task-title-input').value = task.title;
   document.getElementById('task-notes-input').value = task.notes || '';
-  document.getElementById('task-date').value = task.date || '';
-  document.getElementById('task-time').value = task.time || '';
-  document.getElementById('task-reminder').value = task.reminder || '';
-  document.getElementById('task-repeat').value = task.repeat || '';
-  document.getElementById('task-tags').value = (task.tags || []).join(', ');
+  document.getElementById('task-date').value         = task.date     || '';
+  document.getElementById('task-time').value         = task.time     || '';
+  document.getElementById('task-reminder').value     = task.reminder || '';
+  document.getElementById('task-repeat').value       = task.repeat   || '';
+  document.getElementById('task-tags').value         = (task.tags || []).join(', ');
   state.selectedPriority = task.priority || 'high';
   document.querySelectorAll('.pri-btn').forEach(b => b.classList.toggle('active', b.dataset.p === task.priority));
   updateProjectSelect(task.projectId);
@@ -598,8 +565,8 @@ function openEditTask(id) {
 }
 
 function updateProjectSelect(selected = '') {
-  const sel = document.getElementById('task-project');
-  sel.innerHTML = '<option value="">بدون مشروع</option>' +
+  document.getElementById('task-project').innerHTML =
+    '<option value="">بدون مشروع</option>' +
     state.projects.map(p => `<option value="${p.id}" ${p.id === selected ? 'selected' : ''}>${escHtml(p.name)}</option>`).join('');
 }
 
@@ -610,15 +577,14 @@ function saveTask() {
   if (!title) { showToast('يرجى إدخال عنوان المهمة', 'error'); return; }
 
   const tags = document.getElementById('task-tags').value.split(',').map(t => t.trim()).filter(Boolean);
-
-  const taskData = {
+  const data = {
     title,
-    notes: document.getElementById('task-notes-input').value.trim(),
-    priority: state.selectedPriority || 'medium',
-    date: document.getElementById('task-date').value,
-    time: document.getElementById('task-time').value,
-    reminder: document.getElementById('task-reminder').value,
-    repeat: document.getElementById('task-repeat').value,
+    notes:     document.getElementById('task-notes-input').value.trim(),
+    priority:  state.selectedPriority || 'medium',
+    date:      document.getElementById('task-date').value,
+    time:      document.getElementById('task-time').value,
+    reminder:  document.getElementById('task-reminder').value,
+    repeat:    document.getElementById('task-repeat').value,
     projectId: document.getElementById('task-project').value,
     tags,
     completed: false,
@@ -626,14 +592,12 @@ function saveTask() {
 
   if (state.editingTaskId) {
     const idx = state.tasks.findIndex(t => t.id === state.editingTaskId);
-    if (idx !== -1) {
-      state.tasks[idx] = { ...state.tasks[idx], ...taskData };
-      showToast('✅ تم تعديل المهمة', 'success');
-    }
+    if (idx !== -1) { state.tasks[idx] = { ...state.tasks[idx], ...data }; showToast('✅ تم تعديل المهمة', 'success'); }
   } else {
-    state.tasks.unshift({ ...taskData, id: 'task_' + Date.now(), createdAt: new Date().toISOString() });
+    const newTask = { ...data, id: 'task_' + Date.now(), createdAt: new Date().toISOString() };
+    state.tasks.unshift(newTask);
     showToast('✅ تمت إضافة المهمة', 'success');
-    scheduleReminder(state.tasks[0]);
+    scheduleReminder(newTask);
   }
 
   saveTasks();
@@ -653,7 +617,7 @@ function setPriority(p, btn) {
 function toggleTask(id) {
   const task = state.tasks.find(t => t.id === id);
   if (!task) return;
-  task.completed = !task.completed;
+  task.completed   = !task.completed;
   task.completedAt = task.completed ? new Date().toISOString() : null;
   if (task.completed) showToast('🎉 أحسنت! مهمة مكتملة', 'success');
   saveTasks();
@@ -662,17 +626,16 @@ function toggleTask(id) {
 }
 
 function deleteTask(id) {
-  const idx = state.tasks.findIndex(t => t.id === id);
+  const idx  = state.tasks.findIndex(t => t.id === id);
   if (idx === -1) return;
   const card = document.getElementById('tc-' + id);
   if (card) {
     card.style.transition = 'all .25s';
-    card.style.opacity = '0';
-    card.style.transform = 'translateX(50px) scale(.95)';
+    card.style.opacity    = '0';
+    card.style.transform  = 'translateX(50px) scale(.95)';
     setTimeout(() => {
       state.tasks.splice(idx, 1);
-      saveTasks();
-      renderAll();
+      saveTasks(); renderAll();
       if (state.currentPage !== 'home') navigate(state.currentPage);
     }, 250);
   }
@@ -681,17 +644,14 @@ function deleteTask(id) {
 
 function clearAllTasks() {
   if (!confirm('هل أنت متأكد من حذف جميع المهام؟')) return;
-  state.tasks = [];
-  saveTasks();
-  renderAll();
+  state.tasks = []; saveTasks(); renderAll();
   showToast('🗑 تم حذف جميع المهام', 'warning');
 }
 
 function exportData() {
-  const data = JSON.stringify({ tasks: state.tasks, projects: state.projects, exportedAt: new Date().toISOString() }, null, 2);
-  const blob = new Blob([data], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'taskflow-backup.json'; a.click();
+  const blob = new Blob([JSON.stringify({ tasks: state.tasks, projects: state.projects }, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a'); a.href = url; a.download = 'taskflow-backup.json'; a.click();
   URL.revokeObjectURL(url);
   showToast('📤 تم تصدير البيانات', 'success');
 }
@@ -706,13 +666,15 @@ function openAddProject() {
   state.selectedColor = '#6C63FF';
   document.getElementById('project-name-input').value = '';
   document.querySelectorAll('.color-opt').forEach(b => b.classList.toggle('active', b.dataset.c === '#6C63FF'));
-  const modal = document.getElementById('add-project-modal');
-  modal.style.display = 'flex';
-  modal.classList.add('open', 'center');
+  const m = document.getElementById('add-project-modal');
+  m.style.display = 'flex';
+  m.classList.add('open', 'center');
 }
 
 function closeAddProject() {
-  document.getElementById('add-project-modal').classList.remove('open');
+  const m = document.getElementById('add-project-modal');
+  m.classList.remove('open');
+  setTimeout(() => { m.style.display = 'none'; }, 300);
 }
 
 function saveProject() {
@@ -740,8 +702,7 @@ function openEditProfile() {
   if (name && name.trim()) {
     state.user.name = name.trim();
     store.set('user', state.user);
-    updateUserUI();
-    renderSettings();
+    updateUserUI(); renderSettings();
     showToast('✅ تم تحديث الاسم', 'success');
   }
 }
@@ -758,33 +719,25 @@ async function requestNotifications() {
 
 function scheduleReminder(task) {
   if (!task.date || !task.reminder) return;
-  const dateTime = new Date(`${task.date}T${task.time || '09:00'}`);
-  const reminderMs = parseInt(task.reminder) * 60 * 1000;
-  const reminderTime = dateTime - reminderMs;
-  if (reminderTime > Date.now()) {
-    setTimeout(() => sendReminder(task), reminderTime - Date.now());
-  }
+  const dt   = new Date(`${task.date}T${task.time || '09:00'}`);
+  const fire = dt - parseInt(task.reminder) * 60000;
+  if (fire > Date.now()) setTimeout(() => sendReminder(task), fire - Date.now());
 }
 
 function sendReminder(task) {
-  document.getElementById('notif-body').textContent = `تذكير: ${task.title}`;
+  document.getElementById('notif-body').textContent = 'تذكير: ' + task.title;
   document.getElementById('notif-popup').classList.remove('hidden');
-  if (Notification.permission === 'granted') {
-    new Notification('TaskFlow Pro - تذكير', { body: task.title });
-  }
-  showToast(`🔔 تذكير: ${task.title}`, 'info');
+  if (Notification.permission === 'granted') new Notification('TaskFlow Pro', { body: task.title });
+  showToast('🔔 تذكير: ' + task.title, 'info');
 }
 
-function closeNotif() {
-  document.getElementById('notif-popup').classList.add('hidden');
-}
+function closeNotif() { document.getElementById('notif-popup').classList.add('hidden'); }
 
 function startReminderCheck() {
   setInterval(() => {
     const now = new Date();
     state.tasks.filter(t => !t.completed && t.date && t.time).forEach(task => {
-      const taskTime = new Date(`${task.date}T${task.time}`);
-      const diff = taskTime - now;
+      const diff = new Date(`${task.date}T${task.time}`) - now;
       if (diff > 0 && diff <= 60000) sendReminder(task);
     });
   }, 60000);
@@ -806,7 +759,7 @@ function closeModal(id) {
   setTimeout(() => { m.style.display = 'none'; document.body.style.overflow = ''; }, 300);
 }
 
-document.addEventListener('click', (e) => {
+document.addEventListener('click', e => {
   if (e.target.classList.contains('modal-overlay')) {
     e.target.classList.remove('open');
     setTimeout(() => { e.target.style.display = 'none'; document.body.style.overflow = ''; }, 300);
@@ -814,57 +767,53 @@ document.addEventListener('click', (e) => {
 });
 
 // ══════════════════════════════════════════════════════════
-//  TOAST NOTIFICATIONS
+//  TOAST
 // ══════════════════════════════════════════════════════════
 function showToast(msg, type = 'info', duration = 3000) {
-  const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
-  const container = document.getElementById('toast-container');
+  const icons = { success:'✅', error:'❌', warning:'⚠️', info:'ℹ️' };
   const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.innerHTML = `<span class="toast-icon">${icons[type] || 'ℹ️'}</span><span>${msg}</span>`;
-  container.appendChild(toast);
-  setTimeout(() => {
-    toast.classList.add('toast-out');
-    setTimeout(() => toast.remove(), 300);
-  }, duration);
+  toast.className = 'toast ' + type;
+  toast.innerHTML = `<span class="toast-icon">${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  document.getElementById('toast-container').appendChild(toast);
+  setTimeout(() => { toast.classList.add('toast-out'); setTimeout(() => toast.remove(), 300); }, duration);
 }
 
 // ══════════════════════════════════════════════════════════
 //  HELPERS
 // ══════════════════════════════════════════════════════════
-function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 function formatDate(d) { return d.toISOString().split('T')[0]; }
-function escHtml(str) {
-  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ══════════════════════════════════════════════════════════
 //  FIREBASE HELPERS
 // ══════════════════════════════════════════════════════════
 async function saveUserToFirestore(uid, data) {
+  if (!window._db || !window._doc || !window._setDoc) return;
   try {
-    await setDoc(doc(db, 'users', uid), { ...data, updatedAt: new Date().toISOString() }, { merge: true });
-  } catch (e) { console.log('Firestore error:', e); }
+    await window._setDoc(window._doc(window._db, 'users', uid), { ...data, updatedAt: new Date().toISOString() }, { merge: true });
+  } catch (e) { console.log('Firestore:', e.message); }
 }
 
 function translateFirebaseError(code) {
-  const errors = {
-    'auth/user-not-found': 'البريد غير مسجّل',
-    'auth/wrong-password': 'كلمة المرور خاطئة',
-    'auth/email-already-in-use': 'البريد مسجّل مسبقاً',
-    'auth/invalid-email': 'البريد غير صحيح',
-    'auth/weak-password': 'كلمة المرور ضعيفة',
-    'auth/popup-closed-by-user': 'تم إغلاق نافذة تسجيل الدخول',
-    'auth/network-request-failed': 'تحقق من الاتصال بالإنترنت',
-    'auth/invalid-credential': 'البريد أو كلمة المرور خاطئة',
+  const map = {
+    'auth/user-not-found':        'البريد غير مسجّل',
+    'auth/wrong-password':        'كلمة المرور خاطئة',
+    'auth/invalid-credential':    'البريد أو كلمة المرور خاطئة',
+    'auth/email-already-in-use':  'البريد مسجّل مسبقاً',
+    'auth/invalid-email':         'البريد غير صحيح',
+    'auth/weak-password':         'كلمة المرور ضعيفة',
+    'auth/popup-closed-by-user':  'تم إغلاق نافذة تسجيل الدخول',
+    'auth/network-request-failed':'تحقق من الاتصال بالإنترنت',
   };
-  return errors[code] || 'حدث خطأ، حاول مجدداً';
+  return map[code] || 'حدث خطأ، حاول مجدداً';
 }
 
 // ══════════════════════════════════════════════════════════
 //  KEYBOARD SHORTCUTS
 // ══════════════════════════════════════════════════════════
-document.addEventListener('keydown', (e) => {
+document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     document.querySelectorAll('.modal-overlay.open').forEach(m => {
       m.classList.remove('open');
@@ -872,31 +821,26 @@ document.addEventListener('keydown', (e) => {
     });
     closeSidebar();
   }
-  if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-    e.preventDefault();
-    openAddTask();
-  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); openAddTask(); }
 });
 
 // ══════════════════════════════════════════════════════════
-//  PWA / SERVICE WORKER
+//  PWA
 // ══════════════════════════════════════════════════════════
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
-  });
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
 }
 
 // ══════════════════════════════════════════════════════════
-//  BOOT
+//  BOOT — wait for DOM
 // ══════════════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', init);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
 
 /**
- * ══════════════════════════════════════════════════════════
- * TaskFlow Pro
- * Developer: راغب علي
- * Telegram: @xd_8z
+ * TaskFlow Pro | Developer: راغب علي | Telegram: @xd_8z
  * © 2024 All Rights Reserved
- * ══════════════════════════════════════════════════════════
  */
